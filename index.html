@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoalGrove — Savings Goal Planner & Monthly Savings Calculator</title>
+<meta name="description" content="GoalGrove is a free savings goal planner: set one monthly budget, add multiple savings goals, and watch it split your money by deadline or priority. Month-by-month plans, deadline pressure meters and live what-if sliders — no signup needed.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        grove: '#166534',
+        grovedark: '#14532D',
+        grovelight: '#DCFCE7',
+        sand: '#FAF6ED',
+        sanddark: '#F1E8D2',
+        gold: '#CA8A04',
+        golddark: '#A16207',
+        goldlight: '#FEF3C7'
+      },
+      fontFamily: {
+        display: ['Georgia', 'Times New Roman', 'serif']
+      }
+    }
+  }
+}
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { -webkit-font-smoothing: antialiased; }
+  .plant-bob { animation: bob 3.2s ease-in-out infinite; transform-origin: bottom center; }
+  @keyframes bob { 0%,100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+  .card-pop { animation: pop .35s ease-out; }
+  @keyframes pop { from { transform: scale(.96); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+  input[type="range"] { accent-color: #166534; }
+  .tab-active { background: #166534 !important; color: #FAF6ED !important; border-color: #166534 !important; }
+  .plan-row-done { background: #DCFCE7; }
+  details.faq > summary { cursor: pointer; list-style: none; }
+  details.faq > summary::-webkit-details-marker { display: none; }
+  details.faq > summary::after { content: '+'; float: right; font-weight: 700; color: #CA8A04; }
+  details.faq[open] > summary::after { content: '–'; }
+  @media print { .no-print { display: none !important; } }
+</style>
+</head>
+<body id="top" class="bg-sand text-stone-800 min-h-screen flex flex-col">
+
+<!-- ===================== STICKY HEADER ===================== -->
+<header class="no-print sticky top-0 z-50 bg-sand/95 backdrop-blur border-b-2 border-grove/20 shadow-sm">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5" aria-label="GoalGrove home">
+      <svg width="34" height="34" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 42c0-10 0-16 0-22" stroke="#166534" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M24 22C24 14 18 9 9 8c1 9 7 14 15 14z" fill="#16A34A"/>
+        <path d="M24 26c0-7 5-12 14-13-1 8-6 13-14 13z" fill="#15803D"/>
+        <path d="M14 42c3-2 7-3 10-3s7 1 10 3c-3 2-7 3-10 3s-7-1-10-3z" fill="#92400E"/>
+      </svg>
+      <span class="font-display text-2xl font-bold text-grove tracking-tight">GoalGrove</span>
+    </a>
+    <nav class="flex items-center gap-5 sm:gap-8 text-sm font-semibold">
+      <a href="#top" class="text-grove hover:text-golddark transition-colors">Home</a>
+      <a href="https://fixoraa.tech" target="_blank" rel="noopener" class="text-grove hover:text-golddark transition-colors">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===================== TOP AD (verbatim) ===================== -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="flex-1 w-full">
+  <!-- ===================== HERO ===================== -->
+  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-8 pb-2 text-center">
+    <div class="inline-flex items-center gap-2 bg-goldlight border border-gold/40 text-golddark text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+      <span aria-hidden="true">🌱</span> Unlimited Free Usage <span aria-hidden="true">🌱</span>
+    </div>
+    <h1 class="font-display text-3xl sm:text-5xl font-bold text-grove leading-tight">Grow Every Savings Goal,<br class="hidden sm:block"> One Month at a Time</h1>
+    <p class="mt-3 text-stone-600 max-w-2xl mx-auto text-sm sm:text-base">Set one monthly budget and plant as many goals as you like. GoalGrove splits your money across them by deadline or priority, draws a month-by-month plan for each, and warns you when a deadline is in danger — all free, no signup, everything stays in your browser.</p>
+  </section>
+
+  <!-- ===================== TOOL ===================== -->
+  <section id="tool" class="mx-auto max-w-6xl px-4 sm:px-6 py-6">
+
+    <!-- BUDGET + ALLOCATION CARD -->
+    <div class="bg-white rounded-3xl border-2 border-grove/15 shadow-[0_10px_40px_-15px_rgba(22,101,52,0.25)] p-5 sm:p-7 mb-6">
+      <div class="flex flex-col lg:flex-row lg:items-end gap-6">
+        <div class="flex-1">
+          <label for="budgetSlider" class="block text-xs font-bold uppercase tracking-widest text-grove mb-2">Total monthly savings budget <span class="normal-case font-medium text-stone-500">(what-if: drag me)</span></label>
+          <div class="flex items-center gap-3">
+            <input id="budgetSlider" type="range" min="0" max="5000" step="25" value="900" class="flex-1 h-2 cursor-pointer" aria-label="Monthly savings budget slider">
+            <div class="flex items-center gap-1 bg-sanddark rounded-xl px-3 py-2 border border-grove/20 shrink-0">
+              <span class="text-grove font-bold">$</span>
+              <input id="budgetInput" type="number" min="0" max="100000" step="25" value="900" class="w-20 bg-transparent font-bold text-grove text-lg outline-none" aria-label="Monthly savings budget amount">
+            </div>
+          </div>
+          <p class="text-xs text-stone-500 mt-2">This one budget is shared by all your goals. Change it any time — every finish date below redraws instantly.</p>
+        </div>
+        <div class="flex-1">
+          <span class="block text-xs font-bold uppercase tracking-widest text-grove mb-2">Allocation mode</span>
+          <div class="grid grid-cols-3 gap-2" role="group" aria-label="Allocation mode">
+            <button data-mode="equal" class="mode-tab border-2 border-grove/25 rounded-xl px-2 py-2.5 text-xs sm:text-sm font-bold text-grove hover:border-grove transition-colors" aria-pressed="false">⚖️<br>Equal split</button>
+            <button data-mode="deadline" class="mode-tab border-2 border-grove/25 rounded-xl px-2 py-2.5 text-xs sm:text-sm font-bold text-grove hover:border-grove transition-colors" aria-pressed="false">⏰<br>Deadline first</button>
+            <button data-mode="weighted" class="mode-tab border-2 border-grove/25 rounded-xl px-2 py-2.5 text-xs sm:text-sm font-bold text-grove hover:border-grove transition-colors" aria-pressed="false">⭐<br>By priority</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALLOCATION BAR -->
+      <div class="mt-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-widest text-grove">How your <span id="budgetValTop">$900</span>/month is shared</span>
+          <span id="allocNote" class="text-xs text-stone-500"></span>
+        </div>
+        <div id="allocBar" class="flex h-9 rounded-full overflow-hidden border-2 border-grove/20 bg-sanddark" role="img" aria-label="Budget allocation bar"></div>
+        <div id="allocLegend" class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs"></div>
+      </div>
+
+      <!-- STATS -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+        <div class="bg-sand rounded-2xl p-3 text-center border border-grove/10">
+          <div id="statGoals" class="text-2xl font-bold text-grove">0</div>
+          <div class="text-[11px] uppercase tracking-wider text-stone-500 font-semibold">Goals planted</div>
+        </div>
+        <div class="bg-sand rounded-2xl p-3 text-center border border-grove/10">
+          <div id="statAllocated" class="text-2xl font-bold text-grove">$0</div>
+          <div class="text-[11px] uppercase tracking-wider text-stone-500 font-semibold">Allocated / month</div>
+        </div>
+        <div class="bg-sand rounded-2xl p-3 text-center border border-grove/10">
+          <div id="statOnTrack" class="text-2xl font-bold text-grove">0</div>
+          <div class="text-[11px] uppercase tracking-wider text-stone-500 font-semibold">On track</div>
+        </div>
+        <div class="bg-sand rounded-2xl p-3 text-center border border-grove/10">
+          <div id="statTotal" class="text-2xl font-bold text-gold">$0</div>
+          <div class="text-[11px] uppercase tracking-wider text-stone-500 font-semibold">Total target</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD GOAL FORM -->
+    <div class="bg-grove rounded-3xl p-5 sm:p-7 mb-8 text-sand shadow-[0_10px_40px_-15px_rgba(22,101,52,0.5)]">
+      <h2 class="font-display text-xl sm:text-2xl font-bold mb-1">🌱 Plant a new goal</h2>
+      <p class="text-sand/70 text-sm mb-4">Give it a name, a target, a deadline and a priority — GoalGrove does the monthly math.</p>
+      <form id="goalForm" class="grid grid-cols-2 lg:grid-cols-6 gap-3" novalidate>
+        <div class="col-span-2">
+          <label for="fName" class="block text-[11px] font-bold uppercase tracking-wider text-sand/80 mb-1">Goal name</label>
+          <input id="fName" type="text" maxlength="40" placeholder="e.g. Emergency fund" class="w-full rounded-xl px-3 py-2.5 text-stone-800 bg-sand outline-none focus:ring-2 focus:ring-gold text-sm">
+        </div>
+        <div>
+          <label for="fTarget" class="block text-[11px] font-bold uppercase tracking-wider text-sand/80 mb-1">Target ($)</label>
+          <input id="fTarget" type="number" min="1" step="any" placeholder="5000" class="w-full rounded-xl px-3 py-2.5 text-stone-800 bg-sand outline-none focus:ring-2 focus:ring-gold text-sm">
+        </div>
+        <div>
+          <label for="fSaved" class="block text-[11px] font-bold uppercase tracking-wider text-sand/80 mb-1">Saved so far ($)</label>
+          <input id="fSaved" type="number" min="0" step="any" placeholder="0" class="w-full rounded-xl px-3 py-2.5 text-stone-800 bg-sand outline-none focus:ring-2 focus:ring-gold text-sm">
+        </div>
+        <div>
+          <label for="fDeadline" class="block text-[11px] font-bold uppercase tracking-wider text-sand/80 mb-1">Deadline</label>
+          <input id="fDeadline" type="date" class="w-full rounded-xl px-3 py-2.5 text-stone-800 bg-sand outline-none focus:ring-2 focus:ring-gold text-sm">
+        </div>
+        <div>
+          <label for="fPriority" class="block text-[11px] font-bold uppercase tracking-wider text-sand/80 mb-1">Priority</label>
+          <select id="fPriority" class="w-full rounded-xl px-3 py-2.5 text-stone-800 bg-sand outline-none focus:ring-2 focus:ring-gold text-sm">
+            <option value="3">★★★ High</option>
+            <option value="2" selected>★★☆ Medium</option>
+            <option value="1">★☆☆ Low</option>
+          </select>
+        </div>
+        <div class="col-span-2 lg:col-span-6 flex flex-col sm:flex-row sm:items-center gap-3">
+          <p id="formError" class="hidden text-sm font-semibold text-red-200" role="alert"></p>
+          <button type="submit" class="sm:ml-auto bg-gold hover:bg-golddark text-white font-bold px-6 py-2.5 rounded-xl transition-colors text-sm">🌱 Plant this goal</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- GARDEN -->
+    <h2 class="font-display text-2xl font-bold text-grove mb-1">🌼 Your savings garden</h2>
+    <p class="text-sm text-stone-500 mb-4">Each card is a growing plant — the closer to its target, the taller it grows. Expand a card for its month-by-month plan.</p>
+    <div id="garden" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    <p class="text-xs text-stone-400 mt-6 text-center">Your goals are saved automatically in this browser — come back any time and your garden will still be here. Nothing ever leaves your device.</p>
+  </section>
+</main>
+
+<!-- ===================== BOTTOM AD (verbatim) ===================== -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="464498"></script>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SEO ARTICLE ===================== -->
+<article id="seo-article" class="mx-auto max-w-4xl px-4 sm:px-6 py-10 text-stone-700">
+  <h2 class="font-display text-2xl sm:text-3xl font-bold text-grove mb-4">The Complete Guide to Planning Multiple Savings Goals</h2>
+
+  <p class="mb-4">Most savings advice is built around a single number: save 20% of your income, build a six-month emergency fund, retire someday. Real life is messier. You are not saving for one thing — you are saving for an emergency cushion <em>and</em> a wedding <em>and</em> a house deposit <em>and</em> next summer's trip, all from the same paycheck. A <strong>savings goal calculator</strong> that only handles one target at a time forces you to do the hard part — splitting a limited monthly budget across competing goals — in your head. That is exactly the problem a proper <strong>savings plan calculator</strong> should solve for you.</p>
+
+  <p class="mb-4">This guide walks through the full method: how to turn a list of wishes into funded goals with deadlines, how to decide how much to save per month for each one, which allocation strategy fits your personality, and how to keep every goal on track when life changes the numbers. Whether you searched for a <strong>monthly savings calculator</strong>, a <strong>how much to save per month calculator</strong>, or a full <strong>savings goal planner</strong>, the framework below will work with any tool — pen and paper included.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">1. List every goal with three numbers</h3>
+  <p class="mb-4">A goal you cannot measure is a wish. For each thing you want to save for, write down three numbers: the <strong>target amount</strong> (what it costs in total), the <strong>amount already saved</strong> (what you have today), and the <strong>deadline</strong> (the month you need the money). The gap between the first two is your <em>remaining amount</em> — the only number that actually needs funding. Many people skip the "already saved" step and end up over-saving for goals they have half-funded in a forgotten account. Be honest here; a savings goal planner is only as good as its inputs.</p>
+  <p class="mb-4">Deadlines deserve care. Some are hard — a wedding date, a university fee due in September, a lease renewal. Others are soft — "someday I'd like a new car." Mark which is which. Hard deadlines drive your allocation math; soft ones can flex when money is tight. A good rule: if missing the date costs you real money or a real opportunity, it is hard. Everything else is soft.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">2. Decide your total monthly savings budget first</h3>
+  <p class="mb-4">Before splitting money between goals, decide the size of the pie. The classic starting point is the <strong>50/30/20 rule</strong>: roughly 50% of after-tax income for needs, 30% for wants, and 20% for savings and debt repayment. It is a guideline, not a law — in expensive cities many households manage 10–15%, while aggressive savers push past 30%. The right number is the largest amount you can sustain for twelve months without raiding the fund every quarter. Consistency beats ambition: $400 saved every single month outperforms $800 saved for three months followed by a rescue withdrawal.</p>
+  <p class="mb-4">A practical way to find your number: track one normal month of spending, subtract it from your take-home pay, then shave 10% off the remainder as a buffer for irregular expenses. What is left is a defensible monthly savings budget. Automate it — move the money to a separate account on payday, before you can spend it. Paying yourself first is the single highest-leverage habit in personal finance, and every <strong>monthly savings calculator</strong> assumes you are doing it.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">3. Choose an allocation strategy</h3>
+  <p class="mb-4">With a budget and a list of goals, the core question arrives: who gets how much each month? There are three battle-tested strategies, and the best <strong>savings goal planner</strong> tools let you switch between them to compare outcomes.</p>
+  <p class="mb-4"><strong>Equal split</strong> divides the budget evenly across all goals. It is simple, feels fair, and works well when your goals have similar deadlines and importance. Its weakness: a goal due in three months gets the same monthly drip as one due in three years, which can leave urgent goals underfunded.</p>
+  <p class="mb-4"><strong>Deadline-first</strong> funds the most urgent goal first — each goal receives exactly what it needs per month to hit its deadline, in deadline order, until the budget runs out. This is the strategy for people with hard dates: it guarantees that near-term commitments are covered before long-term dreams get a dollar. The trade-off is that low-priority but beloved goals can stall completely in tight months.</p>
+  <p class="mb-4"><strong>Weighted by priority</strong> splits the budget in proportion to how important each goal is. A high-priority emergency fund might get triple the share of a low-priority gadget fund. This mirrors how most of us actually think — not all goals matter equally — and it keeps every goal moving forward, which is motivating. Its risk: a high-priority goal with a distant deadline can hog money while an urgent medium-priority goal quietly slips.</p>
+  <p class="mb-4">There is no universally correct answer. A useful exercise is to run all three in your savings plan calculator and look at the projected finish dates. If deadline-first shows two goals finishing years late, your budget — not your strategy — is the problem, and you need either more monthly savings, smaller targets, or later deadlines.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">4. Do the per-goal monthly math</h3>
+  <p class="mb-4">The arithmetic behind any <strong>how much to save per month calculator</strong> is simple division: <em>(target − already saved) ÷ months until deadline = required monthly amount</em>. If you need $6,000 in 12 months and have $1,500, you must save $375 per month. Compare that required number with what your chosen allocation strategy actually gives the goal. If the allocation meets or beats the requirement, the goal is <strong>on track</strong>. If it falls short but covers at least 70% of the requirement, call it <strong>tight</strong> — achievable with small adjustments like trimming the target or adding a little extra in good months. Below that, the deadline is <strong>impossible</strong> at the current budget, and pretending otherwise just delays the reckoning.</p>
+  <p class="mb-4">This three-way verdict — on track, tight, impossible — is more useful than a single date, because it tells you <em>what to do</em>. On track means leave it alone. Tight means watch it monthly. Impossible means change an input: raise the budget, cut the target, or move the deadline. A planner that hides bad news is entertainment; one that flags it early is a tool.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">5. Build a month-by-month plan for each goal</h3>
+  <p class="mb-4">Annual targets feel abstract; monthly milestones feel real. Break each goal into a month-by-month schedule: Month 1 adds $X (total $Y), Month 2 adds $X (total $Z), and so on until the target is reached. This does two things. First, it converts "save $6,000" into "save $375 by the 31st" — a concrete, checkable task. Second, it exposes drift early: if you are $200 behind schedule in month three, you know in month three, not month eleven. Review the plan monthly, log what you actually saved, and let the finish date move. Plans are living documents; the discipline is in the updating, not in the first draft.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">6. Order your goals sensibly</h3>
+  <p class="mb-4">Conventional wisdom says fund the emergency reserve before anything else, and it is right for most people: three to six months of essential expenses in an instantly accessible account turns job loss or a medical bill from a catastrophe into an inconvenience. After that, attack high-interest debt — no savings goal outruns a 20% credit card balance mathematically. Then fund goals in deadline order, with one exception: if two goals compete, the one whose deadline cannot move wins. Retirement, being decades away, can usually accept a smaller monthly share early on, because compounding does the heavy lifting over time.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">7. Use what-if planning before life forces it</h3>
+  <p class="mb-4">The most underused feature of any <strong>savings goal calculator</strong> is the what-if. Before you commit to a plan, stress-test it: What if my budget drops to $500 for six months? What if the wedding costs $2,000 more than I hoped? What if I get a raise and the budget rises to $1,200? Dragging a slider and watching every finish date redraw teaches you which goals are fragile and which are robust. Fragile goals — the ones that flip from "on track" to "impossible" with a small change — deserve either bigger buffers or earlier deadlines in disguise (aim to finish a month early; you will thank yourself later).</p>
+  <p class="mb-4">What-if thinking also cures the biggest planning fallacy: assuming the best case. Run your plan with the budget 20% lower than you expect. If it still works, your plan is solid. If it collapses, you have learned something cheap — before real money is involved.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">8. Automate, separate, and review</h3>
+  <p class="mb-4">Willpower is unreliable; systems are not. Split your savings into separate accounts or sub-accounts per goal — sometimes called "buckets" or "envelopes." Money pooled in one account gets mentally spent three times over; money labeled "house deposit — do not touch" mostly survives. Set automatic transfers for the day after payday, so saving happens before spending. Then put a 15-minute monthly review on your calendar: log actual savings, compare against the month-by-month plan, and adjust. Fifteen minutes a month is the entire maintenance cost of a multi-goal savings system.</p>
+  <p class="mb-4">Celebrate completions properly. When a goal hits 100%, move the money to its purpose, close the bucket, and — this matters — consciously reassign its monthly share to the remaining goals rather than absorbing it into spending. Lifestyle creep eats exactly these "freed up" dollars. A savings goal planner that shows your garden growing is not just cute; visible progress is one of the strongest motivators behavioral research has found for sticking with long plans.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">9. Common mistakes that derail multi-goal savers</h3>
+  <p class="mb-4"><strong>Mistake one: no deadlines.</strong> "Save for a house someday" competes with nothing and loses to everything. Even a soft deadline creates the monthly number your plan needs. <strong>Mistake two: funding wants before the safety net.</strong> A vacation fund with no emergency reserve is a vacation funded by future debt. <strong>Mistake three: ignoring irregular expenses.</strong> Annual insurance, holiday gifts, car servicing — budget them as monthly goals too, or they will ambush your "real" goals twice a year. <strong>Mistake four: setting the budget from optimism instead of history.</strong> Base it on what you actually spent last quarter, not what you wish you spent. <strong>Mistake five: never re-planning.</strong> A plan you wrote in January and never opened again is a diary entry, not a plan. Revisit monthly; adjust quarterly.</p>
+
+  <h3 class="font-display text-xl font-bold text-grove mt-8 mb-3">10. A worked example</h3>
+  <p class="mb-4">Meet Ana. She takes home $3,200, spends about $2,300, and sets a monthly savings budget of $800 with a $100 buffer. Her goals: an emergency fund ($6,000 target, $1,500 saved, 12-month deadline, high priority), a Japan trip ($3,000 target, $400 saved, 9-month deadline, medium priority), and a new laptop ($1,800 target, $0 saved, 6-month deadline, low priority). Required monthly amounts: $375, $289, and $300 — totaling $964, which exceeds her $800 budget. Under deadline-first allocation, the laptop gets its full $300 (due soonest), the trip gets $289, and the emergency fund gets the remaining $211 — flagged "tight." Ana can see instantly that she must either raise her budget by $164, push the laptop deadline two months out, or accept a slower emergency fund. That clarity — not the arithmetic itself — is what a good <strong>savings plan calculator</strong> delivers: the trade-off, made visible, before it becomes a missed deadline.</p>
+  <p class="mb-4">Start with your own numbers today. List the goals, set the budget, pick a strategy, and let the month-by-month plan do the nagging. Your future self — the one boarding the plane, signing the lease, or simply sleeping better with a full emergency fund — will be glad you planted the garden now.</p>
+</article>
+
+<!-- ===================== FAQS ===================== -->
+<section class="mx-auto max-w-4xl px-4 sm:px-6 pb-12" aria-label="Frequently asked questions">
+  <h2 class="font-display text-2xl sm:text-3xl font-bold text-grove mb-5">Savings Goal FAQs</h2>
+  <div class="space-y-3">
+    <details class="faq bg-white rounded-2xl border border-grove/15 px-5 py-4 shadow-sm">
+      <summary class="font-bold text-grove text-sm sm:text-base">How much should I save per month to reach my goal?</summary>
+      <p class="text-sm text-stone-600 mt-2">Divide what you still need by the months left: (target − already saved) ÷ months until deadline. For example, needing $4,500 in 15 months with $750 saved means ($4,500 − $750) ÷ 15 = $250 per month. A monthly savings calculator does this instantly, but the formula is worth knowing so you can sanity-check any result.</p>
+    </details>
+    <details class="faq bg-white rounded-2xl border border-grove/15 px-5 py-4 shadow-sm">
+      <summary class="font-bold text-grove text-sm sm:text-base">How do I split my savings across multiple goals?</summary>
+      <p class="text-sm text-stone-600 mt-2">Pick a strategy and stay consistent: split equally for simplicity, fund by earliest deadline first when dates are non-negotiable, or weight by priority when some goals matter more than others. Compare the projected finish dates under each method — if a strategy leaves a goal finishing years late, your budget or deadlines need adjusting, not just the split.</p>
+    </details>
+    <details class="faq bg-white rounded-2xl border border-grove/15 px-5 py-4 shadow-sm">
+      <summary class="font-bold text-grove text-sm sm:text-base">What is the 50/30/20 rule for savings?</summary>
+      <p class="text-sm text-stone-600 mt-2">It suggests allocating roughly 50% of after-tax income to needs, 30% to wants, and 20% to savings and debt repayment. It is a starting guideline, not a rule — adjust to your cost of living. The key insight is to decide your total savings budget as a deliberate slice of income before dividing it among individual goals.</p>
+    </details>
+    <details class="faq bg-white rounded-2xl border border-grove/15 px-5 py-4 shadow-sm">
+      <summary class="font-bold text-grove text-sm sm:text-base">Should I build an emergency fund before other goals?</summary>
+      <p class="text-sm text-stone-600 mt-2">For most people, yes. Three to six months of essential expenses in an accessible account protects every other goal — without it, one surprise expense forces you to raid your vacation or house fund, or worse, take on high-interest debt. Give the emergency fund high priority in your planner until it is fully funded, then redirect its monthly share to remaining goals.</p>
+    </details>
+    <details class="faq bg-white rounded-2xl border border-grove/15 px-5 py-4 shadow-sm">
+      <summary class="font-bold text-grove text-sm sm:text-base">What should I do if I cannot meet a savings deadline?</summary>
+      <p class="text-sm text-stone-600 mt-2">Change one of the three inputs: increase the monthly amount, reduce the target, or move the deadline. Increasing the budget is usually hardest, so first look for a smaller target (a shorter trip, a cheaper car) or a later date. Re-run the numbers after each change — small adjustments, like $50 more per month or two extra months, often flip a goal from "impossible" back to "on track."</p>
+    </details>
+    <details class="faq bg-white rounded-2xl border border-grove/15 px-5 py-4 shadow-sm">
+      <summary class="font-bold text-grove text-sm sm:text-base">Is it better to save a fixed amount or a percentage of income?</summary>
+      <p class="text-sm text-stone-600 mt-2">A percentage adapts automatically to raises, bonuses, and lean months, which makes it ideal for long-term goals. A fixed amount is simpler and works well when income is stable. Many savers combine both: a fixed baseline that always gets saved, plus a percentage of any income above that baseline swept into goals with the tightest deadlines.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="no-print border-t-2 border-grove/15 bg-grovedark text-sand/80 mt-auto">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <span class="font-display text-lg font-bold text-sand">GoalGrove</span>
+      <span class="text-xs">· Free savings planning tools · Your data never leaves your browser</span>
+    </div>
+    <nav class="flex gap-6 text-sm font-semibold">
+      <a href="#top" class="hover:text-gold transition-colors">Home</a>
+      <a href="https://fixoraa.tech" target="_blank" rel="noopener" class="hover:text-gold transition-colors">More Tools</a>
+    </nav>
+  </div>
+  <p class="text-center text-[11px] text-sand/50 pb-5 px-4">© 2026 GoalGrove. Educational tool only — not financial advice.</p>
+</footer>
+
+<!-- ===================== PURE LOGIC (DOM-free; also exercised by Node tests) ===================== -->
+<script id="gg-logic">
+'use strict';
+function ggParseDate(s){ var p=String(s).split('-'); return new Date(+p[0], (+p[1]||1)-1, +p[2]||1); }
+function ggToday(){ var t=new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+function ggMonthsUntilDeadline(goal, today){
+  var t = today ? ggParseDate(today) : ggToday();
+  var d = ggParseDate(goal.deadline);
+  return (d.getFullYear()-t.getFullYear())*12 + (d.getMonth()-t.getMonth());
+}
+function ggRemaining(goal){ return Math.max(0, (+goal.target||0) - (+goal.saved||0)); }
+function ggRequiredMonthly(goal, today){
+  var rem = ggRemaining(goal);
+  if (rem <= 0) return 0;
+  var ml = ggMonthsUntilDeadline(goal, today);
+  if (ml < 0) return Infinity;
+  return rem / (ml + 1);
+}
+function ggPriorityWeight(p){ p=+p; if (p>=3) return 3; if (p===2) return 2; return 1; }
+function ggAllocate(goals, budget, mode, today){
+  var n = goals.length, out = new Array(n);
+  var i;
+  for (i=0;i<n;i++) out[i]=0;
+  budget = Math.max(0, +budget || 0);
+  if (!n || budget <= 0) return out;
+  if (mode === 'weighted'){
+    var ws = goals.map(function(g){ return ggPriorityWeight(g.priority); });
+    var tot = ws.reduce(function(a,b){ return a+b; }, 0);
+    if (tot <= 0){ for (i=0;i<n;i++) out[i]=budget/n; return out; }
+    for (i=0;i<n;i++) out[i]=budget*ws[i]/tot;
+    return out;
+  }
+  if (mode === 'deadline'){
+    var order = goals.map(function(g,idx){ return idx; }).sort(function(a,b){
+      var da=ggParseDate(goals[a].deadline).getTime(), db=ggParseDate(goals[b].deadline).getTime();
+      if (da!==db) return da-db;
+      return ggPriorityWeight(goals[b].priority)-ggPriorityWeight(goals[a].priority);
+    });
+    var left=budget, incomplete=[];
+    for (var k=0;k<order.length;k++){
+      var gi=order[k], g=goals[gi], rem=ggRemaining(g), need=ggRequiredMonthly(g,today);
+      var give = rem<=0 ? 0 : Math.min(need,left);
+      out[gi]=give; left-=give;
+      if (rem>0) incomplete.push(gi);
+    }
+    if (left>0.005 && incomplete.length){
+      var share=left/incomplete.length;
+      for (var j=0;j<incomplete.length;j++) out[incomplete[j]]+=share;
+    }
+    return out;
+  }
+  for (i=0;i<n;i++) out[i]=budget/n;
+  return out;
+}
+function ggFinishMonths(goal, alloc){
+  var rem=ggRemaining(goal);
+  if (rem<=0) return 0;
+  if (!(alloc>0)) return Infinity;
+  return Math.ceil(rem/alloc - 1e-9);
+}
+function ggFinishDate(goal, alloc, today){
+  var m=ggFinishMonths(goal,alloc);
+  if (!isFinite(m)) return null;
+  var t = today ? ggParseDate(today) : ggToday();
+  return new Date(t.getFullYear(), t.getMonth()+m, 1);
+}
+function ggPressure(goal, alloc, today){
+  var rem=ggRemaining(goal);
+  if (rem<=0) return 'on-track';
+  var ml=ggMonthsUntilDeadline(goal,today);
+  if (ml<0) return 'impossible';
+  var need=rem/(ml+1);
+  if (alloc>=need) return 'on-track';
+  if (!(alloc>0)) return 'impossible';
+  return (alloc/need)>=0.7 ? 'tight' : 'impossible';
+}
+function ggBuildPlan(goal, alloc, today, maxMonths){
+  maxMonths=maxMonths||600;
+  var rows=[], rem=ggRemaining(goal), cum=(+goal.saved||0);
+  if (rem<=0) return rows;
+  var t = today ? ggParseDate(today) : ggToday();
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for (var i=0;i<maxMonths && rem>0.005;i++){
+    if (!(alloc>0)) break;
+    var c=Math.min(alloc,rem); rem-=c; cum+=c;
+    var d=new Date(t.getFullYear(), t.getMonth()+i, 1);
+    rows.push({ month: months[d.getMonth()]+' '+d.getFullYear(), contribution:c, cumulative:cum, done: rem<=0.005 });
+  }
+  return rows;
+}
+function ggProgress(goal){
+  var t=+goal.target||0;
+  if (t<=0) return 1;
+  return Math.min(1, Math.max(0, (+goal.saved||0)/t));
+}
+function ggPlantStage(progress){
+  if (progress>=1) return '🌻';
+  if (progress>=0.75) return '🌳';
+  if (progress>=0.5) return '🪴';
+  if (progress>0) return '🌿';
+  return '🌱';
+}
+</script>
+
+<!-- ===================== UI ===================== -->
+<script>
+'use strict';
+(function(){
+  var STORE_KEY='goalgrove-v1';
+  var GOAL_COLORS=['#166534','#CA8A04','#0D9488','#B45309','#4D7C0F','#92400E','#1D4ED8','#A21CAF','#0F766E','#9A3412'];
+  var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var uid=0;
+  function nid(){ uid++; return 'g'+Date.now().toString(36)+'_'+uid; }
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function fmtMoney(n){
+    n=Math.round((+n||0)*100)/100;
+    return '$'+n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
+  }
+  function toISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function plusMonths(m){ var t=new Date(); return toISO(new Date(t.getFullYear(), t.getMonth()+m, t.getDate())); }
+  function fmtFinishDate(d){ if(!d) return null; return MONTHS[d.getMonth()]+' '+d.getFullYear(); }
+
+  function seed(){
+    return {
+      budget: 900, mode: 'deadline',
+      goals: [
+        { id: nid(), name:'Emergency fund', target:6000, saved:1500, deadline: plusMonths(12), priority:3 },
+        { id: nid(), name:'Japan trip', target:3000, saved:400, deadline: plusMonths(9), priority:2 },
+        { id: nid(), name:'New laptop', target:1800, saved:0, deadline: plusMonths(6), priority:1 }
+      ]
+    };
+  }
+  function load(){
+    try{
+      var raw=localStorage.getItem(STORE_KEY);
+      if(!raw) return null;
+      var s=JSON.parse(raw);
+      if(!s || !Array.isArray(s.goals)) return null;
+      s.budget=Math.max(0,+s.budget||0);
+      if(['equal','deadline','weighted'].indexOf(s.mode)<0) s.mode='deadline';
+      s.goals=s.goals.filter(function(g){ return g && g.name; }).map(function(g){
+        return { id:String(g.id||nid()), name:String(g.name).slice(0,40), target:Math.max(0,+g.target||0), saved:Math.max(0,+g.saved||0), deadline:String(g.deadline||plusMonths(12)), priority:Math.min(3,Math.max(1,+g.priority||2)) };
+      });
+      return s;
+    }catch(e){ return null; }
+  }
+  function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+
+  var state = load() || seed();
+  var allocs = [];
+
+  function computeAllocs(){ allocs = ggAllocate(state.goals, state.budget, state.mode); }
+
+  function goalColor(i){ return GOAL_COLORS[i % GOAL_COLORS.length]; }
+
+  function pressureMeta(p){
+    if(p==='on-track') return { label:'On track', cls:'bg-green-100 text-green-800 border-green-300', dot:'bg-green-500' };
+    if(p==='tight') return { label:'Tight', cls:'bg-amber-100 text-amber-800 border-amber-300', dot:'bg-amber-500' };
+    return { label:'Off track', cls:'bg-red-100 text-red-800 border-red-300', dot:'bg-red-500' };
+  }
+
+  function cardHTML(g, i){
+    var stars='★'.repeat(g.priority)+'☆'.repeat(3-g.priority);
+    return ''+
+    '<div class="card-pop bg-white rounded-3xl border-2 border-grove/15 shadow-[0_10px_35px_-18px_rgba(22,101,52,0.35)] p-5 flex flex-col" data-goal="'+g.id+'">'+
+      '<div class="flex items-start justify-between gap-2">'+
+        '<div class="flex items-center gap-3">'+
+          '<div class="js-plant plant-bob text-5xl leading-none" aria-hidden="true">🌱</div>'+
+          '<div>'+
+            '<h3 class="font-bold text-grove leading-tight">'+esc(g.name)+'</h3>'+
+            '<div class="text-gold text-sm tracking-widest" title="Priority '+g.priority+' of 3">'+stars+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<button data-act="del" class="text-stone-300 hover:text-red-500 text-xl leading-none px-1" aria-label="Delete '+esc(g.name)+'" title="Remove goal">×</button>'+
+      '</div>'+
+      '<div class="mt-4">'+
+        '<div class="flex justify-between text-xs font-semibold mb-1"><span class="js-savedlabel text-stone-600"></span><span class="js-pct text-grove"></span></div>'+
+        '<div class="h-3.5 rounded-full bg-sanddark overflow-hidden border border-grove/10"><div class="js-bar h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#16A34A,#166534)"></div></div>'+
+      '</div>'+
+      '<div class="grid grid-cols-2 gap-2 mt-4 text-sm">'+
+        '<div class="bg-sand rounded-xl p-2.5 border border-grove/10"><div class="text-[10px] uppercase tracking-wider text-stone-500 font-bold">Monthly share</div><div class="js-alloc font-bold text-grove"></div></div>'+
+        '<div class="bg-sand rounded-xl p-2.5 border border-grove/10"><div class="text-[10px] uppercase tracking-wider text-stone-500 font-bold">Finishes</div><div class="js-finish font-bold text-grove"></div></div>'+
+      '</div>'+
+      '<div class="mt-3">'+
+        '<div class="flex items-center justify-between mb-1"><span class="text-[10px] uppercase tracking-wider text-stone-500 font-bold">Deadline pressure</span><span class="js-pill text-[11px] font-bold px-2.5 py-0.5 rounded-full border"></span></div>'+
+        '<div class="h-2 rounded-full bg-sanddark overflow-hidden"><div class="js-meter h-full rounded-full transition-all duration-500" style="width:0%"></div></div>'+
+        '<div class="js-need text-[11px] text-stone-500 mt-1"></div>'+
+      '</div>'+
+      '<div class="mt-3 bg-sanddark/60 rounded-xl p-3 border border-grove/10">'+
+        '<div class="flex justify-between text-[11px] font-bold mb-1"><span class="text-stone-600">🎚️ What-if target</span><span class="js-tlabel text-grove"></span></div>'+
+        '<input type="range" data-act="target" min="0" max="100" value="100" class="w-full cursor-pointer" aria-label="What-if target for '+esc(g.name)+'">'+
+        '<div class="text-[10px] text-stone-400">Drag to see how a bigger or smaller target moves the finish date.</div>'+
+      '</div>'+
+      '<div class="mt-3 flex gap-2">'+
+        '<input type="number" data-act="saved" min="0" step="any" placeholder="Log savings $" class="flex-1 min-w-0 rounded-xl border border-grove/20 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold bg-sand/50" aria-label="Log savings for '+esc(g.name)+'">'+
+        '<button data-act="addsaved" class="bg-grove hover:bg-grovedark text-sand text-sm font-bold px-3 rounded-xl transition-colors">+ Add</button>'+
+      '</div>'+
+      '<button data-act="plan" class="mt-3 w-full text-sm font-bold text-golddark bg-goldlight hover:bg-gold/20 border border-gold/30 rounded-xl py-2 transition-colors" aria-expanded="false">📅 Month-by-month plan</button>'+
+      '<div class="js-plan hidden mt-2 max-h-64 overflow-y-auto rounded-xl border border-grove/15"></div>'+
+    '</div>';
+  }
+
+  function paintCard(card, g, alloc){
+    var prog=ggProgress(g), p=ggPressure(g,alloc), pm=pressureMeta(p);
+    var need=ggRequiredMonthly(g);
+    var fm=ggFinishMonths(g,alloc), fd=ggFinishDate(g,alloc);
+    var finishTxt = fm===0 ? '🎉 Done!' : (!isFinite(fm) ? 'Never at this rate' : fmtFinishDate(fd));
+    card.querySelector('.js-plant').textContent=ggPlantStage(prog);
+    card.querySelector('.js-savedlabel').textContent=fmtMoney(g.saved)+' of '+fmtMoney(g.target)+' saved';
+    card.querySelector('.js-pct').textContent=Math.round(prog*100)+'%';
+    card.querySelector('.js-bar').style.width=(prog*100)+'%';
+    card.querySelector('.js-alloc').textContent=fmtMoney(Math.round(alloc*100)/100)+'/mo';
+    var fEl=card.querySelector('.js-finish');
+    fEl.textContent=finishTxt;
+    fEl.className='js-finish font-bold '+(fm===0?'text-green-700':(!isFinite(fm)?'text-red-600':'text-grove'));
+    var pill=card.querySelector('.js-pill');
+    pill.textContent=pm.label;
+    pill.className='js-pill text-[11px] font-bold px-2.5 py-0.5 rounded-full border '+pm.cls;
+    var meter=card.querySelector('.js-meter');
+    var ratio = need===0 ? 1 : (need===Infinity ? 0 : Math.min(1, alloc/need));
+    meter.style.width=Math.round(ratio*100)+'%';
+    meter.style.background = p==='on-track' ? '#16A34A' : (p==='tight' ? '#CA8A04' : '#DC2626');
+    card.querySelector('.js-need').textContent = need===0 ? 'Goal fully funded 🎉' : (need===Infinity ? 'Deadline has passed — move it or raise the budget.' : 'Needs '+fmtMoney(Math.ceil(need*100)/100)+'/mo to hit the deadline');
+    var slider=card.querySelector('[data-act="target"]');
+    var base=Math.max(g.target, g.saved, 100);
+    slider.min=0; slider.max=Math.ceil(base*2/50)*50;
+    if(document.activeElement!==slider) slider.value=Math.round(g.target);
+    card.querySelector('.js-tlabel').textContent=fmtMoney(g.target);
+  }
+
+  function renderAllocBar(){
+    var bar=$('allocBar'), legend=$('allocLegend'), note=$('allocNote');
+    if(!state.goals.length || state.budget<=0){
+      bar.innerHTML='<div class="w-full h-full flex items-center justify-center text-xs text-stone-400 font-semibold">'+(state.goals.length?'Set a monthly budget above to grow your garden':'Plant a goal to get started')+'</div>';
+      legend.innerHTML=''; note.textContent='';
+      return;
+    }
+    var total=allocs.reduce(function(a,b){return a+b;},0);
+    bar.innerHTML=state.goals.map(function(g,i){
+      var w=Math.max(0, allocs[i]/state.budget*100);
+      if(w<=0) return '';
+      return '<div class="h-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden whitespace-nowrap" style="width:'+w+'%;background:'+goalColor(i)+';min-width:'+(w>6?'24px':'0')+'" title="'+esc(g.name)+': '+fmtMoney(allocs[i])+'/mo">'+(w>12?esc(g.name.length>10?g.name.slice(0,10)+'…':g.name):'')+'</div>';
+    }).join('');
+    legend.innerHTML=state.goals.map(function(g,i){
+      return '<span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-full" style="background:'+goalColor(i)+'"></span><span class="font-semibold text-stone-600">'+esc(g.name)+'</span><span class="text-stone-400">'+fmtMoney(Math.round(allocs[i]*100)/100)+'/mo</span></span>';
+    }).join('');
+    var surplus=state.budget-total;
+    note.textContent = surplus>0.5 ? fmtMoney(Math.round(surplus*100)/100)+'/mo unallocated — finishes goals early 🎉' : (surplus<-0.5 ? 'Over-allocated' : 'Fully allocated');
+  }
+
+  function renderStats(){
+    $('statGoals').textContent=state.goals.length;
+    var total=allocs.reduce(function(a,b){return a+b;},0);
+    $('statAllocated').textContent=fmtMoney(Math.round(total*100)/100);
+    var onTrack=state.goals.filter(function(g,i){ return ggPressure(g,allocs[i])==='on-track'; }).length;
+    $('statOnTrack').textContent=onTrack+'/'+state.goals.length;
+    $('statTotal').textContent=fmtMoney(state.goals.reduce(function(a,g){return a+(+g.target||0);},0));
+    $('budgetValTop').textContent=fmtMoney(state.budget);
+  }
+
+  function updateComputed(){
+    computeAllocs();
+    renderAllocBar();
+    renderStats();
+    state.goals.forEach(function(g){
+      var card=document.querySelector('[data-goal="'+g.id+'"]');
+      if(card) paintCard(card, g, allocs[state.goals.indexOf(g)]);
+    });
+  }
+
+  function renderAll(){
+    computeAllocs();
+    $('budgetSlider').value=Math.min(5000,state.budget);
+    $('budgetInput').value=state.budget;
+    var tabs=document.querySelectorAll('.mode-tab');
+    tabs.forEach(function(t){
+      var active=t.getAttribute('data-mode')===state.mode;
+      t.classList.toggle('tab-active',active);
+      t.setAttribute('aria-pressed',active?'true':'false');
+    });
+    var garden=$('garden');
+    if(!state.goals.length){
+      garden.innerHTML='<div class="col-span-full border-2 border-dashed border-grove/30 rounded-3xl p-10 text-center text-stone-500 bg-white/60">'+
+        '<div class="text-5xl mb-3">🪴</div><p class="font-bold text-grove text-lg">Your garden is empty</p>'+
+        '<p class="text-sm mt-1">Plant your first goal with the form above and watch it grow.</p></div>';
+    }else{
+      garden.innerHTML=state.goals.map(function(g,i){ return cardHTML(g,i); }).join('');
+    }
+    updateComputed();
+  }
+
+  function buildPlanTable(g, alloc){
+    var rows=ggBuildPlan(g,alloc);
+    if(!rows.length) return '<p class="p-3 text-sm text-green-700 font-semibold">🎉 Fully funded — nothing left to schedule!</p>';
+    var show=rows.slice(0,60);
+    var html='<table class="w-full text-xs"><thead><tr class="text-left text-stone-500 uppercase text-[10px] tracking-wider border-b border-grove/10">'+
+      '<th class="p-2">Month</th><th class="p-2 text-right">Saved</th><th class="p-2 text-right">Total</th></tr></thead><tbody>'+
+      show.map(function(r){
+        return '<tr class="border-b border-grove/5 '+(r.done?'plan-row-done font-bold':'')+'"><td class="p-2">'+r.month+'</td><td class="p-2 text-right">'+fmtMoney(Math.round(r.contribution*100)/100)+'</td><td class="p-2 text-right">'+fmtMoney(Math.round(r.cumulative*100)/100)+(r.done?' 🎉':'')+'</td></tr>';
+      }).join('')+'</tbody></table>';
+    if(rows.length>60) html+='<p class="p-2 text-[11px] text-stone-400 text-center">+ '+(rows.length-60)+' more months until the goal is reached</p>';
+    if(!isFinite(ggFinishMonths(g,alloc))) html='<p class="p-3 text-sm text-red-600 font-semibold">⚠️ At $0/month this goal never finishes — raise the budget or pick a funded allocation mode.</p>'+html;
+    return html;
+  }
+
+  // ---- events ----
+  $('budgetSlider').addEventListener('input', function(e){
+    state.budget=Math.max(0,+e.target.value||0);
+    $('budgetInput').value=state.budget;
+    updateComputed(); save();
+  });
+  $('budgetInput').addEventListener('input', function(e){
+    state.budget=Math.max(0,+e.target.value||0);
+    if(state.budget<=5000) $('budgetSlider').value=state.budget;
+    updateComputed(); save();
+  });
+  document.querySelectorAll('.mode-tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      state.mode=t.getAttribute('data-mode');
+      save(); renderAll();
+    });
+  });
+
+  $('goalForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var err=$('formError');
+    var name=$('fName').value.trim();
+    var target=+$('fTarget').value, saved=+$('fSaved').value||0;
+    var deadline=$('fDeadline').value, priority=+$('fPriority').value;
+    function fail(msg){ err.textContent=msg; err.classList.remove('hidden'); }
+    err.classList.add('hidden');
+    if(!name) return fail('Please give your goal a name.');
+    if(!(target>0)) return fail('Target must be more than $0.');
+    if(!(saved>=0)) return fail('Saved amount cannot be negative.');
+    if(saved>target) return fail('Saved so far cannot exceed the target.');
+    if(!deadline) return fail('Please pick a deadline.');
+    state.goals.push({ id:nid(), name:name.slice(0,40), target:target, saved:saved, deadline:deadline, priority:priority });
+    $('fName').value=''; $('fTarget').value=''; $('fSaved').value='';
+    save(); renderAll();
+  });
+
+  $('garden').addEventListener('click', function(e){
+    var btn=e.target.closest('[data-act]');
+    if(!btn) return;
+    var card=e.target.closest('[data-goal]');
+    if(!card) return;
+    var g=state.goals.find(function(x){ return x.id===card.getAttribute('data-goal'); });
+    if(!g) return;
+    var act=btn.getAttribute('data-act');
+    if(act==='del'){
+      state.goals=state.goals.filter(function(x){ return x.id!==g.id; });
+      save(); renderAll();
+    }else if(act==='plan'){
+      var box=card.querySelector('.js-plan');
+      var open=box.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', open?'false':'true');
+      if(!open && !box.dataset.built){
+        var alloc=allocs[state.goals.indexOf(g)];
+        box.innerHTML=buildPlanTable(g,alloc);
+        box.dataset.built='1';
+      }
+    }else if(act==='addsaved'){
+      var inp=card.querySelector('[data-act="saved"]');
+      var v=+inp.value;
+      if(v>0){ g.saved=Math.round((g.saved+v)*100)/100; save(); renderAll(); }
+      else { inp.focus(); inp.classList.add('ring-2','ring-red-400'); setTimeout(function(){ inp.classList.remove('ring-2','ring-red-400'); },1200); }
+    }
+  });
+
+  $('garden').addEventListener('input', function(e){
+    var slider=e.target.closest('[data-act="target"]');
+    if(!slider) return;
+    var card=e.target.closest('[data-goal]');
+    var g=state.goals.find(function(x){ return x.id===card.getAttribute('data-goal'); });
+    if(!g) return;
+    g.target=Math.max(0, Math.round(+slider.value));
+    if(g.saved>g.target) g.saved=g.target;
+    updateComputed(); save();
+  });
+
+  if(!$('fDeadline').value) $('fDeadline').value=plusMonths(12);
+  renderAll();
+})();
+</script>
+
+<!-- ===================== JSON-LD FAQ SCHEMA ===================== -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How much should I save per month to reach my goal?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Divide what you still need by the months left: (target minus already saved) divided by months until deadline. For example, needing $4,500 in 15 months with $750 saved means ($4,500 - $750) / 15 = $250 per month." }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I split my savings across multiple goals?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Pick a strategy and stay consistent: split equally for simplicity, fund by earliest deadline first when dates are non-negotiable, or weight by priority when some goals matter more than others. Compare projected finish dates under each method before committing." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the 50/30/20 rule for savings?",
+      "acceptedAnswer": { "@type": "Answer", "text": "It suggests allocating roughly 50% of after-tax income to needs, 30% to wants, and 20% to savings and debt repayment. It is a starting guideline, not a law — adjust it to your cost of living and savings ambition." }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I build an emergency fund before other goals?",
+      "acceptedAnswer": { "@type": "Answer", "text": "For most people, yes. Three to six months of essential expenses in an accessible account protects every other goal from surprise expenses. Give the emergency fund high priority until it is fully funded, then redirect its monthly share to remaining goals." }
+    },
+    {
+      "@type": "Question",
+      "name": "What should I do if I cannot meet a savings deadline?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Change one of the three inputs: increase the monthly amount, reduce the target, or move the deadline. Small adjustments, like $50 more per month or two extra months, often flip a goal from impossible back to on track." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it better to save a fixed amount or a percentage of income?",
+      "acceptedAnswer": { "@type": "Answer", "text": "A percentage adapts automatically to raises and lean months, which suits long-term goals. A fixed amount is simpler when income is stable. Many savers combine both: a fixed baseline plus a percentage of income above that baseline." }
+    }
+  ]
+}
+</script>
+</body>
+</html>
